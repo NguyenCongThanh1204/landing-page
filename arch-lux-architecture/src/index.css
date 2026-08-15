@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: initial;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  body {
+    background-color: #FFFFFF; /* Trắng tinh khiết */
+    color: #0F172A;            /* Chữ Xanh Đen Than sắc nét */
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Cormorant Garamond', serif;
+  }
+}
+
+/* Custom Selection */
+::selection {
+  background-color: #1E3A8A;
+  color: #FFFFFF;
+}
+
+/* Hairline Border Utility cho cảm giác cao cấp */
+.border-hairline {
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+/* Glass Effect trong suốt sắc nét */
+.glass-effect-light {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.glass-effect-dark {
+  background: rgba(15, 23, 42, 0.90);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+/* Tùy chỉnh thanh cuộn đẹp và mượt */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #eb323a;
+}
