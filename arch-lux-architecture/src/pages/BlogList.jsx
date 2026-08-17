@@ -260,7 +260,10 @@ export default function BlogList() {
                 <Clock size={14} className="text-[#EB323A]" />
               </div>
 
-              <div className="max-h-[540px] overflow-y-auto pr-1 space-y-3 custom-scrollbar">
+              <div
+                data-lenis-prevent="true"
+                className="max-h-[540px] overflow-y-auto overscroll-contain touch-pan-y pr-1 space-y-3 custom-scrollbar"
+              >
                 {filteredPosts.map((post) => {
                   const isSelected = featuredPost?._id === post._id;
 

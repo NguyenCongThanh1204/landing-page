@@ -120,7 +120,7 @@ export default function ServicesPage() {
 
       {/* CÁC COMPONENT DỊCH VỤ & DỰ ÁN CỦA TRANG */}
       <Services />
-      <Projects />
+      {/* <Projects /> */}
     </div>
   );
 }
