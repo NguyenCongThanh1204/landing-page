@@ -16,8 +16,8 @@ export default {
         hairline: "rgba(15, 23, 42, 0.08)", // Viền mỏng chuẩn xa xỉ
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        heading: ['Cormorant Garamond', 'serif'],
+        sans: ['Manrope', 'Segoe UI', 'sans-serif'],
+        heading: ['Cormorant Garamond', 'Georgia', 'serif'],
       },
       letterSpacing: {
         widest: '.25em',

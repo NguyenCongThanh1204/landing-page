@@ -13,7 +13,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { client, urlFor } from '../sanityClient';
 
-const POSTS_PER_PAGE = 15; // 16 bài/trang (chia đều hàng 4 bài trên Desktop)
+const POSTS_PER_PAGE = 12; // 12 bài/trang (chia đều lưới 3 hoặc 4 cột)
 
 export default function BlogList() {
   const [posts, setPosts] = useState([]);
@@ -23,7 +23,6 @@ export default function BlogList() {
   const [featuredPost, setFeaturedPost] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // 1. Tải danh sách bài viết từ Sanity
   useEffect(() => {
     const query = `*[_type == "post"] | order(publishedAt desc) {
       _id,
@@ -42,7 +41,6 @@ export default function BlogList() {
       .then((data) => {
         setPosts(data || []);
         if (data && data.length > 0) {
-          // Mặc định bài Featured là bài viết mới nhất
           const sortedByTime = [...data].sort(
             (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
           );
@@ -56,17 +54,13 @@ export default function BlogList() {
       });
   }, []);
 
-  // 2. Lượt xem chỉ được tăng ở trang chi tiết bài viết.
-  // Không tăng ở danh sách để tránh đếm trùng khi người dùng click vào bài.
-
-  // 3. Danh sách Top 5 bài viết nhiều LƯỢT XEM NHẤT (cột bên phải)
+  // Lấy Top 4 bài nhiều lượt xem nhất để cân bằng chiều cao với Featured Post
   const topViewedPosts = useMemo(() => {
     return [...posts]
       .sort((a, b) => (b.views || 0) - (a.views || 0))
-      .slice(0, 5);
+      .slice(0, 6);
   }, [posts]);
 
-  // 4. Danh mục bộ lọc
   const filterCategories = useMemo(() => {
     const preset = ['Tất cả', 'Tin Công Ty', 'Tin Công Trình'];
     const dynamic = [];
@@ -82,7 +76,6 @@ export default function BlogList() {
     return Array.from(new Set([...preset, ...dynamic]));
   }, [posts]);
 
-  // Chuẩn hóa chuỗi tìm kiếm tiếng Việt
   const normalizeText = (str) => {
     if (!str) return '';
     return str
@@ -95,7 +88,6 @@ export default function BlogList() {
       .trim();
   };
 
-  // 5. Lọc danh sách bài viết theo danh mục và từ khóa
   const filteredPosts = useMemo(() => {
     return posts.filter((post) => {
       let matchesCategory = false;
@@ -118,7 +110,6 @@ export default function BlogList() {
     });
   }, [posts, selectedCategory, searchTerm]);
 
-  // Reset trang về 1 khi đổi bộ lọc hoặc tìm kiếm
   useEffect(() => {
     setCurrentPage(1);
     if (filteredPosts.length > 0) {
@@ -149,7 +140,6 @@ export default function BlogList() {
     });
   }, [posts]);
 
-  // 6. Xử lý phân trang cho lưới bài viết bên dưới
   const totalPages = Math.ceil(filteredPosts.length / POSTS_PER_PAGE);
   const paginatedPosts = useMemo(() => {
     const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
@@ -169,7 +159,7 @@ export default function BlogList() {
     <section className="min-h-screen bg-[#F8FAFC] text-slate-900 pt-32 pb-24 font-sans select-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
         
-        {/* THANH TÌM KIẾM & BỘ LỌC CHUYÊN MỤC */}
+        {/* THANH TÌM KIẾM & BỘ LỌC */}
         <div className="flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center mb-8 bg-white p-3.5 border border-slate-200 shadow-xs rounded-sm">
           <div className="relative w-full md:w-80">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
@@ -221,12 +211,12 @@ export default function BlogList() {
           </div>
         ) : (
           <>
-            {/* KHU VỰC TOP: BÀI VIẾT NỔI BẬT & CỘT BÀI XEM NHIỀU NHẤT */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-16">
+            {/* KHU VỰC TOP: CÂN BẰNG TỈ LỆ 8:4 */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 mb-16">
               
-              {/* CỘT TRÁI: BÀI VIẾT NỔI BẬT (FEATURED POST) */}
+              {/* CỘT TRÁI: FEATURED POST (Rộng 8/12, ảnh to hơn) */}
               {featuredPost && (
-                <div className="lg:col-span-7 bg-white border border-slate-200 p-5 sm:p-6 shadow-xs">
+                <div className="lg:col-span-8 bg-white border border-slate-200 p-5 sm:p-6 shadow-xs flex flex-col justify-between">
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={featuredPost._id}
@@ -234,56 +224,58 @@ export default function BlogList() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
                       transition={{ duration: 0.25 }}
-                      className="flex flex-col"
+                      className="flex flex-col h-full justify-between"
                     >
-                      <Link 
-                        to={`/Tin-tuc/${featuredPost.slug?.current}`} 
-                        className="group block mb-4"
-                      >
-                        <div className="relative w-full h-[280px] sm:h-[360px] overflow-hidden bg-slate-100 rounded-xs">
-                          {featuredPost.mainImage ? (
-                            <img
-                              src={urlFor(featuredPost.mainImage).width(1600).quality(85).url()}
-                              alt={featuredPost.title}
-                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400 text-xs uppercase">
-                              No Image
-                            </div>
-                          )}
+                      <div>
+                        <Link 
+                          to={`/Tin-tuc/${featuredPost.slug?.current}`} 
+                          className="group block mb-4"
+                        >
+                          <div className="relative w-full h-[300px] sm:h-[380px] lg:h-[420px] overflow-hidden bg-slate-100 rounded-xs">
+                            {featuredPost.mainImage ? (
+                              <img
+                                src={urlFor(featuredPost.mainImage).width(1600).quality(85).url()}
+                                alt={featuredPost.title}
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400 text-xs uppercase">
+                                No Image
+                              </div>
+                            )}
+                          </div>
+                        </Link>
+
+                        <div className="flex flex-wrap items-center gap-2 text-[11px] sm:text-xs text-slate-500 mb-3">
+                          <span className="inline-flex items-center gap-1 text-[#EB323A] font-semibold uppercase tracking-[0.12em]">
+                            <Tag size={12} /> {featuredPost.categoryName || featuredPost.allCategories?.[0] || 'Tin tức'}
+                          </span>
+                          <span className="text-slate-300">•</span>
+                          <span className="inline-flex items-center gap-1 font-medium">
+                            <Calendar size={12} className="text-slate-400" />
+                            {formatDate(featuredPost.publishedAt)}
+                          </span>
+                          <span className="text-slate-300">•</span>
+                          <span className="inline-flex items-center gap-1 font-medium">
+                            <Eye size={13} className="text-slate-400" />
+                            {(featuredPost.views || 0).toLocaleString()} lượt xem
+                          </span>
                         </div>
-                      </Link>
 
-                      <div className="flex flex-wrap items-center gap-2 text-[11px] sm:text-xs text-slate-500 mb-3">
-                        <span className="inline-flex items-center gap-1 text-[#EB323A] font-semibold uppercase tracking-[0.12em]">
-                          <Tag size={12} /> {featuredPost.categoryName || featuredPost.allCategories?.[0] || 'Tin tức'}
-                        </span>
-                        <span className="text-slate-300">•</span>
-                        <span className="inline-flex items-center gap-1 font-medium">
-                          <Calendar size={12} className="text-slate-400" />
-                          {formatDate(featuredPost.publishedAt)}
-                        </span>
-                        <span className="text-slate-300">•</span>
-                        <span className="inline-flex items-center gap-1 font-medium">
-                          <Eye size={13} className="text-slate-400" />
-                          {(featuredPost.views || 0).toLocaleString()} lượt xem
-                        </span>
+                        <Link 
+                          to={`/Tin-tuc/${featuredPost.slug?.current}`}
+                        >
+                          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 mb-3 leading-snug tracking-[-0.02em] hover:text-[#EB323A] transition-colors">
+                            {featuredPost.title}
+                          </h2>
+                        </Link>
+
+                        {featuredPost.excerpt && (
+                          <p className="text-slate-600 text-sm sm:text-[15px] leading-relaxed font-normal mb-5 line-clamp-3">
+                            {featuredPost.excerpt}
+                          </p>
+                        )}
                       </div>
-
-                      <Link 
-                        to={`/Tin-tuc/${featuredPost.slug?.current}`}
-                      >
-                        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 mb-3 leading-tight tracking-[-0.02em] hover:text-[#EB323A] transition-colors">
-                          {featuredPost.title}
-                        </h2>
-                      </Link>
-
-                      {featuredPost.excerpt && (
-                        <p className="text-slate-600 text-sm sm:text-[15px] leading-7 font-normal mb-5 line-clamp-3">
-                          {featuredPost.excerpt}
-                        </p>
-                      )}
 
                       <div>
                         <Link
@@ -299,56 +291,59 @@ export default function BlogList() {
                 </div>
               )}
 
-              {/* CỘT PHẢI: TOP 5 BÀI VIẾT LƯỢT XEM NHIỀU NHẤT */}
-              <div className="lg:col-span-5 bg-white border border-slate-200 p-4 sm:p-5 shadow-xs">
-                <div className="text-[11px] sm:text-xs font-bold text-slate-800 uppercase tracking-[0.12em] pb-3 mb-3 border-b border-slate-100 flex items-center justify-between">
-                  <span>Lượt xem nhiều nhất</span>
-                  <Eye size={15} className="text-[#EB323A]" />
-                </div>
+              {/* CỘT PHẢI: TOP 4 BÀI XEM NHIỀU (Rộng 4/12, vừa khít chiều cao) */}
+              <div className="lg:col-span-4 bg-white border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-col justify-between">
+                <div>
+                  <div className="text-[11px] sm:text-xs font-bold text-slate-800 uppercase tracking-[0.12em] pb-3 mb-2 border-b border-slate-100 flex items-center justify-between">
+                    <span>Lượt xem nhiều nhất</span>
+                    <Eye size={15} className="text-[#EB323A]" />
+                  </div>
 
-                <div className="space-y-3">
-                  {topViewedPosts.map((post, index) => (
-                    <Link
-                      key={post._id}
-                      to={`/Tin-tuc/${post.slug?.current}`}
-                      className="flex gap-3.5 p-2 rounded-xs transition-all duration-200 cursor-pointer group hover:bg-slate-50 border-b border-slate-100 last:border-b-0"
-                    >
-                      <div className="relative w-24 h-16 sm:w-28 sm:h-20 shrink-0 overflow-hidden bg-slate-100 rounded-xs">
-                        <span className="absolute top-1 left-1 bg-black/70 backdrop-blur-xs text-white text-[10px] font-bold px-1.5 py-0.5 rounded-xs z-10">
-                          #{index + 1}
-                        </span>
-                        {post.mainImage ? (
-                          <img
-                            src={urlFor(post.mainImage).width(1000).quality(85).url()}
-                            alt={post.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400 text-[10px]">
-                            NO IMAGE
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex flex-col justify-between flex-1 min-w-0">
-                        <h3 className="text-xs sm:text-sm font-semibold leading-5 line-clamp-2 text-slate-800 group-hover:text-[#EB323A] transition-colors">
-                          {post.title}
-                        </h3>
-                        <div className="flex items-center gap-3 text-[10px] sm:text-[11px] text-slate-400 mt-1.5">
-                          <span>{formatDate(post.publishedAt)}</span>
-                          <span className="flex items-center gap-1 text-[#EB323A] font-semibold">
-                            <Eye size={11} /> {(post.views || 0).toLocaleString()}
+                  <div className="divide-y divide-slate-100">
+                    {topViewedPosts.map((post, index) => (
+                      <Link
+                        key={post._id}
+                        to={`/Tin-tuc/${post.slug?.current}`}
+                        className="flex gap-3 py-3.5 first:pt-1.5 last:pb-0 transition-all duration-200 cursor-pointer group"
+                      >
+                        <div className="relative w-20 h-16 sm:w-24 sm:h-18 shrink-0 overflow-hidden bg-slate-100 rounded-xs">
+                          <span className="absolute top-1 left-1 bg-black/70 backdrop-blur-xs text-white text-[9px] font-bold px-1.5 py-0.5 rounded-xs z-10">
+                            #{index + 1}
                           </span>
+                          {post.mainImage ? (
+                            <img
+                              src={urlFor(post.mainImage).width(600).quality(80).url()}
+                              alt={post.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400 text-[9px]">
+                              NO IMAGE
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    </Link>
-                  ))}
+
+                        <div className="flex flex-col justify-between flex-1 min-w-0">
+                          <h3 className="text-[15px] sm:text-base font-semibold leading-snug line-clamp-2 text-slate-800 group-hover:text-[#EB323A] transition-colors">
+                              {post.title}
+                          </h3>
+                          <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-1">
+                            <span>{formatDate(post.publishedAt)}</span>
+                            <span>•</span>
+                            <span className="flex items-center gap-1 text-[#EB323A] font-semibold">
+                              <Eye size={10} /> {(post.views || 0).toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               </div>
 
             </div>
 
-            {/* KHU VỰC DƯỚI: LƯỚI TẤT CẢ BÀI VIẾT (GRID 3-4 CỘT) */}
+            {/* KHU VỰC DƯỚI: DANH SÁCH BÀI VIẾT (GRID 3 CỘT ĐỀU ĐẸP) */}
             <div className="border-t border-slate-200 pt-10">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg sm:text-xl font-bold text-slate-900 uppercase tracking-[0.08em] flex items-center gap-2">
@@ -357,8 +352,7 @@ export default function BlogList() {
                 </h3>
               </div>
 
-              {/* Grid 1 cột mobile -> 2 tablet -> 3 laptop -> 4 desktop */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {paginatedPosts.map((post) => (
                   <div
                     key={post._id}
@@ -370,7 +364,7 @@ export default function BlogList() {
                     >
                       {post.mainImage ? (
                         <img
-                          src={urlFor(post.mainImage).width(1200).quality(85).url()}
+                          src={urlFor(post.mainImage).width(1000).quality(85).url()}
                           alt={post.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
@@ -395,12 +389,12 @@ export default function BlogList() {
                         <Link
                           to={`/Tin-tuc/${post.slug?.current}`}
                         >
-                          <h4 className="text-sm sm:text-[15px] font-bold text-slate-900 leading-6 tracking-[-0.01em] line-clamp-2 group-hover:text-[#EB323A] transition-colors mb-2">
+                          <h4 className="text-sm sm:text-[18px] font-bold text-slate-900 leading-snug tracking-[-0.01em] line-clamp-2 group-hover:text-[#EB323A] transition-colors mb-2">
                             {post.title}
                           </h4>
                         </Link>
                         {post.excerpt && (
-                          <p className="text-xs sm:text-sm text-slate-600 line-clamp-2 leading-6 font-normal">
+                          <p className="text-xs sm:text-sm text-slate-600 line-clamp-2 leading-relaxed font-normal">
                             {post.excerpt}
                           </p>
                         )}
@@ -420,7 +414,7 @@ export default function BlogList() {
                 ))}
               </div>
 
-              {/* KHU VỰC PHÂN TRANG (PAGINATION) */}
+              {/* PHÂN TRANG */}
               {totalPages > 1 && (
                 <div className="flex justify-center items-center gap-2 mt-12">
                   <button
