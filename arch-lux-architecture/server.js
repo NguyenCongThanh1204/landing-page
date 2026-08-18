@@ -16,13 +16,6 @@ app.post('/api/submit-application', upload.single('cv'), async (req, res) => {
     const { fullName, phone, position } = req.body || {};
     const file = req.file;
 
-    // console.log('submit-application request:', {
-    //   fullName,
-    //   phone,
-    //   position,
-    //   file: file ? { originalname: file.originalname, size: file.size, mimetype: file.mimetype } : null,
-    // });
-
     if (!fullName || !phone) {
       return res.status(400).json({ message: 'Vui lòng điền họ tên và số điện thoại.' });
     }
@@ -95,6 +88,49 @@ app.post('/api/submit-application', upload.single('cv'), async (req, res) => {
     return res.status(500).json({
       success: false,
       message: error?.message || 'Gửi hồ sơ thất bại. Vui lòng thử lại.',
+    });
+  }
+});
+
+app.post('/api/increment-post-view', async (req, res) => {
+  try {
+    const { postId } = req.body || {};
+
+    if (!postId) {
+      return res.status(400).json({ success: false, message: 'Thiếu postId.' });
+    }
+
+    const projectId = process.env.VITE_SANITY_PROJECT_ID;
+    const dataset = process.env.VITE_SANITY_DATASET || 'production';
+    const sanityToken = process.env.VITE_SANITY_WRITE_TOKEN;
+
+    if (!projectId || !sanityToken) {
+      return res.status(500).json({
+        success: false,
+        message: 'Thiếu VITE_SANITY_PROJECT_ID hoặc VITE_SANITY_WRITE_TOKEN trên server.'
+      });
+    }
+
+    const sanityClient = createClient({
+      projectId,
+      dataset,
+      useCdn: false,
+      apiVersion: '2024-01-01',
+      token: sanityToken,
+    });
+
+    const result = await sanityClient
+      .patch(postId)
+      .setIfMissing({ views: 0 })
+      .inc({ views: 1 })
+      .commit();
+
+    return res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    console.error('increment-post-view error:', error);
+    return res.status(500).json({
+      success: false,
+      message: error?.message || 'Không thể cập nhật lượt xem.'
     });
   }
 });

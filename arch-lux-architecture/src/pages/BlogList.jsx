@@ -1,8 +1,19 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, Loader2, Search, Calendar, Clock, Tag } from 'lucide-react';
+import { 
+  ArrowUpRight, 
+  Loader2, 
+  Search, 
+  Calendar, 
+  Eye, 
+  Tag, 
+  ChevronLeft, 
+  ChevronRight 
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { client, urlFor } from '../sanityClient';
+
+const POSTS_PER_PAGE = 15; // 16 bài/trang (chia đều hàng 4 bài trên Desktop)
 
 export default function BlogList() {
   const [posts, setPosts] = useState([]);
@@ -10,7 +21,9 @@ export default function BlogList() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [featuredPost, setFeaturedPost] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
+  // 1. Tải danh sách bài viết từ Sanity
   useEffect(() => {
     const query = `*[_type == "post"] | order(publishedAt desc) {
       _id,
@@ -19,6 +32,7 @@ export default function BlogList() {
       publishedAt,
       mainImage,
       excerpt,
+      views,
       "categoryName": categories[0]->title,
       "allCategories": categories[]->title
     }`;
@@ -26,12 +40,13 @@ export default function BlogList() {
     client
       .fetch(query)
       .then((data) => {
-        setPosts(data);
-        if (data.length > 0) {
-          const sorted = [...data].sort(
+        setPosts(data || []);
+        if (data && data.length > 0) {
+          // Mặc định bài Featured là bài viết mới nhất
+          const sortedByTime = [...data].sort(
             (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
           );
-          setFeaturedPost(sorted[0]);
+          setFeaturedPost(sortedByTime[0]);
         }
         setLoading(false);
       })
@@ -41,16 +56,17 @@ export default function BlogList() {
       });
   }, []);
 
-  // 1. Sắp xếp thời gian đăng bài gần nhất lên trên
-  const sortedPosts = useMemo(() => {
-    return [...posts].sort((a, b) => {
-      const timeA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
-      const timeB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
-      return timeB - timeA;
-    });
+  // 2. Lượt xem chỉ được tăng ở trang chi tiết bài viết.
+  // Không tăng ở danh sách để tránh đếm trùng khi người dùng click vào bài.
+
+  // 3. Danh sách Top 5 bài viết nhiều LƯỢT XEM NHẤT (cột bên phải)
+  const topViewedPosts = useMemo(() => {
+    return [...posts]
+      .sort((a, b) => (b.views || 0) - (a.views || 0))
+      .slice(0, 5);
   }, [posts]);
 
-  // 2. Tạo danh sách nút bấm Lọc chuyên mục chuẩn
+  // 4. Danh mục bộ lọc
   const filterCategories = useMemo(() => {
     const preset = ['Tất cả', 'Tin Công Ty', 'Tin Công Trình'];
     const dynamic = [];
@@ -66,7 +82,7 @@ export default function BlogList() {
     return Array.from(new Set([...preset, ...dynamic]));
   }, [posts]);
 
-  // 🔄 Chuẩn hóa chuỗi so sánh không lo viết hoa/thường hay dấu tiếng Việt
+  // Chuẩn hóa chuỗi tìm kiếm tiếng Việt
   const normalizeText = (str) => {
     if (!str) return '';
     return str
@@ -79,17 +95,14 @@ export default function BlogList() {
       .trim();
   };
 
-  // 3. LOGIC LỌC CHUẨN XÁC DỰA TRÊN REFERENCE CATEGORIES
+  // 5. Lọc danh sách bài viết theo danh mục và từ khóa
   const filteredPosts = useMemo(() => {
-    return sortedPosts.filter((post) => {
-      // 1. Kiểm tra Lọc theo danh mục
+    return posts.filter((post) => {
       let matchesCategory = false;
       if (selectedCategory === 'Tất cả' || selectedCategory === 'All') {
         matchesCategory = true;
       } else {
         const targetSlug = normalizeText(selectedCategory);
-
-        // Kiểm tra xem danh mục được chọn có nằm trong mảng allCategories của bài viết không
         if (post.allCategories && Array.isArray(post.allCategories)) {
           matchesCategory = post.allCategories.some((catTitle) =>
             normalizeText(catTitle).includes(targetSlug) || targetSlug.includes(normalizeText(catTitle))
@@ -100,21 +113,48 @@ export default function BlogList() {
         }
       }
 
-      // 2. Kiểm tra Tìm kiếm theo từ khóa
       const matchesSearch = post.title?.toLowerCase().includes(searchTerm.toLowerCase());
-
       return matchesCategory && matchesSearch;
     });
-  }, [sortedPosts, selectedCategory, searchTerm]);
+  }, [posts, selectedCategory, searchTerm]);
 
-  // Tự động cập nhật bài Featured
+  // Reset trang về 1 khi đổi bộ lọc hoặc tìm kiếm
   useEffect(() => {
+    setCurrentPage(1);
     if (filteredPosts.length > 0) {
-      setFeaturedPost(filteredPosts[0]);
+      const nextFeatured = filteredPosts[0];
+      setFeaturedPost((prev) => {
+        if (!prev) return nextFeatured;
+        const synced = filteredPosts.find((post) => post._id === prev._id) || nextFeatured;
+        return synced;
+      });
     } else {
       setFeaturedPost(null);
     }
   }, [selectedCategory, searchTerm, filteredPosts]);
+
+  useEffect(() => {
+    if (!posts.length) return;
+
+    setFeaturedPost((prev) => {
+      if (!prev) {
+        const sortedByTime = [...posts].sort(
+          (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+        );
+        return sortedByTime[0] || null;
+      }
+
+      const matched = posts.find((post) => post._id === prev._id);
+      return matched || prev;
+    });
+  }, [posts]);
+
+  // 6. Xử lý phân trang cho lưới bài viết bên dưới
+  const totalPages = Math.ceil(filteredPosts.length / POSTS_PER_PAGE);
+  const paginatedPosts = useMemo(() => {
+    const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
+    return filteredPosts.slice(startIndex, startIndex + POSTS_PER_PAGE);
+  }, [filteredPosts, currentPage]);
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Mới cập nhật';
@@ -129,12 +169,8 @@ export default function BlogList() {
     <section className="min-h-screen bg-[#F8FAFC] text-slate-900 pt-32 pb-24 font-sans select-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
         
-        {/* Header */}
-        
-
-        {/* Search & Categories Filter */}
+        {/* THANH TÌM KIẾM & BỘ LỌC CHUYÊN MỤC */}
         <div className="flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center mb-8 bg-white p-3.5 border border-slate-200 shadow-xs rounded-sm">
-          
           <div className="relative w-full md:w-80">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
             <input
@@ -142,15 +178,14 @@ export default function BlogList() {
               placeholder="Tìm kiếm bài viết..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-sm pl-10 pr-4 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#EB323A] transition-colors"
+              className="w-full bg-slate-50 border border-slate-200 rounded-sm pl-10 pr-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#EB323A] transition-colors"
             />
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
             {filterCategories.map((cat) => {
               const isActive =
-                selectedCategory === cat ||
-                (selectedCategory === 'All' && cat === 'Tất cả');
+                selectedCategory === cat || (selectedCategory === 'All' && cat === 'Tất cả');
 
               return (
                 <button
@@ -167,10 +202,9 @@ export default function BlogList() {
               );
             })}
           </div>
-
         </div>
 
-        {/* Render Bài Viết */}
+        {/* NỘI DUNG CHÍNH */}
         {loading ? (
           <div className="flex justify-center items-center py-32 bg-white border border-slate-200">
             <Loader2 className="animate-spin text-[#EB323A]" size={36} />
@@ -186,101 +220,106 @@ export default function BlogList() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            
-            {/* CỘT TRÁI - FEATURED */}
-            {featuredPost && (
-              <div className="lg:col-span-7 bg-white border border-slate-200 p-5 sm:p-6 shadow-xs">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={featuredPost._id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.25 }}
-                    className="flex flex-col"
-                  >
-                    <Link to={`/Tin-tuc/${featuredPost.slug?.current}`} className="group block mb-4">
-                      <div className="relative w-full h-[280px] sm:h-[360px] overflow-hidden bg-slate-100 rounded-xs">
-                        {featuredPost.mainImage ? (
-                          <img
-                            src={urlFor(featuredPost.mainImage).width(1000).url()}
-                            alt={featuredPost.title}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400 text-xs uppercase">
-                            No Image
-                          </div>
-                        )}
-                      </div>
-                    </Link>
-
-                    <div className="flex items-center gap-3 text-xs text-slate-500 mb-2.5">
-                      <span className="inline-flex items-center gap-1 text-[#EB323A] font-semibold uppercase tracking-wider">
-                        <Tag size={12} /> {featuredPost.categoryName || featuredPost.allCategories?.[0] || 'Tin tức'}
-                      </span>
-                      <span>•</span>
-                      <span className="inline-flex items-center gap-1 font-mono text-slate-500">
-                        <Calendar size={12} className="text-slate-400" />
-                        {formatDate(featuredPost.publishedAt)}
-                      </span>
-                    </div>
-
-                    <Link to={`/Tin-tuc/${featuredPost.slug?.current}`}>
-                      <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-3 leading-snug hover:text-[#EB323A] transition-colors">
-                        {featuredPost.title}
-                      </h2>
-                    </Link>
-
-                    {featuredPost.excerpt && (
-                      <p className="text-slate-600 text-sm leading-relaxed font-normal mb-5 line-clamp-3">
-                        {featuredPost.excerpt}
-                      </p>
-                    )}
-
-                    <div>
-                      <Link
-                        to={`/Tin-tuc/${featuredPost.slug?.current}`}
-                        className="inline-flex items-center gap-2 bg-[#EB323A] hover:bg-[#c82229] text-white font-semibold text-xs uppercase px-5 py-2.5 transition-all shadow-xs rounded-xs"
-                      >
-                        <span>Xem chi tiết</span>
-                        <ArrowUpRight size={14} />
-                      </Link>
-                    </div>
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-            )}
-
-            {/* CỘT PHẢI - SCROLLABLE LIST */}
-            <div className="lg:col-span-5 bg-white border border-slate-200 p-4 sm:p-5 shadow-xs">
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider pb-3 mb-3 border-b border-slate-100 flex items-center justify-between">
-                <span>Lượt xem nhiều nhất ({filteredPosts.length})</span>
-                <Clock size={14} className="text-[#EB323A]" />
-              </div>
-
-              <div
-                data-lenis-prevent="true"
-                className="max-h-[540px] overflow-y-auto overscroll-contain touch-pan-y pr-1 space-y-3 custom-scrollbar"
-              >
-                {filteredPosts.map((post) => {
-                  const isSelected = featuredPost?._id === post._id;
-
-                  return (
-                    <div
-                      key={post._id}
-                      onClick={() => setFeaturedPost(post)}
-                      className={`flex gap-3.5 p-2 rounded-xs transition-all duration-200 cursor-pointer group border-b border-slate-100 last:border-b-0 ${
-                        isSelected 
-                          ? 'bg-slate-50 border-l-4 border-l-[#EB323A]' 
-                          : 'hover:bg-slate-50/80'
-                      }`}
+          <>
+            {/* KHU VỰC TOP: BÀI VIẾT NỔI BẬT & CỘT BÀI XEM NHIỀU NHẤT */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-16">
+              
+              {/* CỘT TRÁI: BÀI VIẾT NỔI BẬT (FEATURED POST) */}
+              {featuredPost && (
+                <div className="lg:col-span-7 bg-white border border-slate-200 p-5 sm:p-6 shadow-xs">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={featuredPost._id}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.25 }}
+                      className="flex flex-col"
                     >
-                      <div className="w-24 h-16 sm:w-28 sm:h-20 shrink-0 overflow-hidden bg-slate-100 rounded-xs">
+                      <Link 
+                        to={`/Tin-tuc/${featuredPost.slug?.current}`} 
+                        className="group block mb-4"
+                      >
+                        <div className="relative w-full h-[280px] sm:h-[360px] overflow-hidden bg-slate-100 rounded-xs">
+                          {featuredPost.mainImage ? (
+                            <img
+                              src={urlFor(featuredPost.mainImage).width(1600).quality(85).url()}
+                              alt={featuredPost.title}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400 text-xs uppercase">
+                              No Image
+                            </div>
+                          )}
+                        </div>
+                      </Link>
+
+                      <div className="flex flex-wrap items-center gap-2 text-[11px] sm:text-xs text-slate-500 mb-3">
+                        <span className="inline-flex items-center gap-1 text-[#EB323A] font-semibold uppercase tracking-[0.12em]">
+                          <Tag size={12} /> {featuredPost.categoryName || featuredPost.allCategories?.[0] || 'Tin tức'}
+                        </span>
+                        <span className="text-slate-300">•</span>
+                        <span className="inline-flex items-center gap-1 font-medium">
+                          <Calendar size={12} className="text-slate-400" />
+                          {formatDate(featuredPost.publishedAt)}
+                        </span>
+                        <span className="text-slate-300">•</span>
+                        <span className="inline-flex items-center gap-1 font-medium">
+                          <Eye size={13} className="text-slate-400" />
+                          {(featuredPost.views || 0).toLocaleString()} lượt xem
+                        </span>
+                      </div>
+
+                      <Link 
+                        to={`/Tin-tuc/${featuredPost.slug?.current}`}
+                      >
+                        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 mb-3 leading-tight tracking-[-0.02em] hover:text-[#EB323A] transition-colors">
+                          {featuredPost.title}
+                        </h2>
+                      </Link>
+
+                      {featuredPost.excerpt && (
+                        <p className="text-slate-600 text-sm sm:text-[15px] leading-7 font-normal mb-5 line-clamp-3">
+                          {featuredPost.excerpt}
+                        </p>
+                      )}
+
+                      <div>
+                        <Link
+                          to={`/Tin-tuc/${featuredPost.slug?.current}`}
+                          className="inline-flex items-center gap-2 bg-[#EB323A] hover:bg-[#c82229] text-white font-semibold text-xs uppercase px-5 py-2.5 transition-all shadow-xs rounded-xs"
+                        >
+                          <span>Xem chi tiết</span>
+                          <ArrowUpRight size={14} />
+                        </Link>
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              )}
+
+              {/* CỘT PHẢI: TOP 5 BÀI VIẾT LƯỢT XEM NHIỀU NHẤT */}
+              <div className="lg:col-span-5 bg-white border border-slate-200 p-4 sm:p-5 shadow-xs">
+                <div className="text-[11px] sm:text-xs font-bold text-slate-800 uppercase tracking-[0.12em] pb-3 mb-3 border-b border-slate-100 flex items-center justify-between">
+                  <span>Lượt xem nhiều nhất</span>
+                  <Eye size={15} className="text-[#EB323A]" />
+                </div>
+
+                <div className="space-y-3">
+                  {topViewedPosts.map((post, index) => (
+                    <Link
+                      key={post._id}
+                      to={`/Tin-tuc/${post.slug?.current}`}
+                      className="flex gap-3.5 p-2 rounded-xs transition-all duration-200 cursor-pointer group hover:bg-slate-50 border-b border-slate-100 last:border-b-0"
+                    >
+                      <div className="relative w-24 h-16 sm:w-28 sm:h-20 shrink-0 overflow-hidden bg-slate-100 rounded-xs">
+                        <span className="absolute top-1 left-1 bg-black/70 backdrop-blur-xs text-white text-[10px] font-bold px-1.5 py-0.5 rounded-xs z-10">
+                          #{index + 1}
+                        </span>
                         {post.mainImage ? (
                           <img
-                            src={urlFor(post.mainImage).width(300).url()}
+                            src={urlFor(post.mainImage).width(1000).quality(85).url()}
                             alt={post.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
@@ -291,42 +330,139 @@ export default function BlogList() {
                         )}
                       </div>
 
-                      <div className="flex flex-col justify-between flex-1">
-                        <h3 className={`text-xs sm:text-sm font-semibold leading-snug line-clamp-2 transition-colors ${
-                          isSelected ? 'text-[#EB323A]' : 'text-slate-800 group-hover:text-[#EB323A]'
-                        }`}>
+                      <div className="flex flex-col justify-between flex-1 min-w-0">
+                        <h3 className="text-xs sm:text-sm font-semibold leading-5 line-clamp-2 text-slate-800 group-hover:text-[#EB323A] transition-colors">
                           {post.title}
                         </h3>
-                        <span className="text-[11px] font-mono text-slate-400 mt-1">
-                          {formatDate(post.publishedAt)}
-                        </span>
+                        <div className="flex items-center gap-3 text-[10px] sm:text-[11px] text-slate-400 mt-1.5">
+                          <span>{formatDate(post.publishedAt)}</span>
+                          <span className="flex items-center gap-1 text-[#EB323A] font-semibold">
+                            <Eye size={11} /> {(post.views || 0).toLocaleString()}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    </Link>
+                  ))}
+                </div>
               </div>
+
             </div>
 
-          </div>
+            {/* KHU VỰC DƯỚI: LƯỚI TẤT CẢ BÀI VIẾT (GRID 3-4 CỘT) */}
+            <div className="border-t border-slate-200 pt-10">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg sm:text-xl font-bold text-slate-900 uppercase tracking-[0.08em] flex items-center gap-2">
+                  <span className="w-2 h-2 bg-[#EB323A] inline-block" />
+                  Danh Sách Bài Viết ({filteredPosts.length})
+                </h3>
+              </div>
+
+              {/* Grid 1 cột mobile -> 2 tablet -> 3 laptop -> 4 desktop */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
+                {paginatedPosts.map((post) => (
+                  <div
+                    key={post._id}
+                    className="bg-white border border-slate-200/90 rounded-xs overflow-hidden shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col group"
+                  >
+                    <Link
+                      to={`/Tin-tuc/${post.slug?.current}`}
+                      className="block relative h-48 overflow-hidden bg-slate-100"
+                    >
+                      {post.mainImage ? (
+                        <img
+                          src={urlFor(post.mainImage).width(1200).quality(85).url()}
+                          alt={post.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs uppercase">
+                          No Image
+                        </div>
+                      )}
+                      <span className="absolute top-2.5 left-2.5 bg-black/75 backdrop-blur-xs text-white text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-xs">
+                        {post.categoryName || post.allCategories?.[0] || 'Tin tức'}
+                      </span>
+                    </Link>
+
+                    <div className="p-4 flex flex-col flex-1 justify-between">
+                      <div>
+                        <div className="flex items-center justify-between text-[10px] sm:text-[11px] font-medium text-slate-400 mb-2.5">
+                          <span>{formatDate(post.publishedAt)}</span>
+                          <span className="flex items-center gap-1 text-[#EB323A]">
+                            <Eye size={12} /> {(post.views || 0).toLocaleString()}
+                          </span>
+                        </div>
+                        <Link
+                          to={`/Tin-tuc/${post.slug?.current}`}
+                        >
+                          <h4 className="text-sm sm:text-[15px] font-bold text-slate-900 leading-6 tracking-[-0.01em] line-clamp-2 group-hover:text-[#EB323A] transition-colors mb-2">
+                            {post.title}
+                          </h4>
+                        </Link>
+                        {post.excerpt && (
+                          <p className="text-xs sm:text-sm text-slate-600 line-clamp-2 leading-6 font-normal">
+                            {post.excerpt}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="pt-4 mt-3 border-t border-slate-100 flex items-center justify-between">
+                        <Link
+                          to={`/Tin-tuc/${post.slug?.current}`}
+                          className="text-[11px] font-bold uppercase tracking-wider text-[#EB323A] inline-flex items-center gap-1 group-hover:gap-1.5 transition-all"
+                        >
+                          <span>Đọc tiếp</span>
+                          <ArrowUpRight size={13} />
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* KHU VỰC PHÂN TRANG (PAGINATION) */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-12">
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="p-2 border border-slate-200 bg-white rounded-xs text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => {
+                        setCurrentPage(page);
+                        window.scrollTo({ top: 400, behavior: 'smooth' });
+                      }}
+                      className={`w-9 h-9 text-xs font-bold rounded-xs transition-all cursor-pointer ${
+                        currentPage === page
+                          ? 'bg-[#EB323A] text-white shadow-xs'
+                          : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="p-2 border border-slate-200 bg-white rounded-xs text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              )}
+
+            </div>
+          </>
         )}
 
       </div>
-
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: #f1f5f9;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #cbd5e1;
-          border-radius: 2px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #94a3b8;
-        }
-      `}</style>
     </section>
   );
 }

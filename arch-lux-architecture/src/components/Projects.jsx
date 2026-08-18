@@ -76,9 +76,9 @@ export default function Projects({ isLightPageProp }) {
         {/* Header & Filter Buttons */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-16 gap-8">
           <div>
-            <span className="text-xs uppercase tracking-[0.3em] text-accent font-medium block mb-3">
+            {/* <span className="text-xs uppercase tracking-[0.3em] text-accent font-medium block mb-3">
               Selected Works
-            </span>
+            </span> */}
             <h2 className="font-heading text-4xl sm:text-5xl md:text-6xl font-light">
               Dự án <span className="italic text-accent">tiêu biểu</span>
             </h2>

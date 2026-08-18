@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -143,11 +143,14 @@ export default function BlogDetail() {
   const { slug } = useParams();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
+  const viewedRef = useRef(false);
 
   useEffect(() => {
     const query = `*[_type == "post" && slug.current == $slug][0]{
+      _id,
       title,
       publishedAt,
+      views,
       "category": categories[0]->title,
       gallery[] {
         ...,
@@ -168,6 +171,25 @@ export default function BlogDetail() {
         setLoading(false);
       });
   }, [slug]);
+
+  useEffect(() => {
+    if (!post?._id || viewedRef.current) return;
+
+    viewedRef.current = true;
+
+    setPost((prev) => {
+      if (!prev) return prev;
+      return { ...prev, views: (prev.views || 0) + 1 };
+    });
+
+    fetch('/api/increment-post-view', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ postId: post._id }),
+    }).catch((err) => {
+      console.error('Lỗi cập nhật lượt xem chi tiết:', err);
+    });
+  }, [post?._id]);
 
   if (loading) {
     return (
@@ -241,14 +263,15 @@ export default function BlogDetail() {
         {/* Ảnh đại diện chính */}
         {post.mainImage && (
           <figure className="mb-16 flex flex-col items-center justify-center w-full">
-            <div className="aspect-[21/9] w-full overflow-hidden rounded-sm border border-slate-100 shadow-xl bg-slate-50">
+            <div className="aspect-[21/9] w-full max-h-[720px] overflow-hidden rounded-sm border border-slate-100 shadow-xl bg-slate-50">
               <img
-                src={urlFor(post.mainImage).width(1600).url()}
+                src={urlFor(post.mainImage).width(1800).quality(85).url()}
                 alt={
                   post.mainImage.caption ||
                   `Ảnh đại diện bài viết: ${post.title}`
                 }
                 className="w-full h-full object-cover"
+                loading="eager"
               />
             </div>
             {post.mainImage.caption && (
@@ -284,7 +307,7 @@ export default function BlogDetail() {
                 >
                   <div className="overflow-hidden rounded-sm border border-slate-200 bg-slate-50 shadow-sm w-full aspect-[4/3]">
                     <img
-                      src={urlFor(item).width(800).url()}
+                      src={urlFor(item).width(1600).quality(90).url()}
                       alt={item.caption || `Ảnh ${index + 1}`}
                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                       loading="lazy"

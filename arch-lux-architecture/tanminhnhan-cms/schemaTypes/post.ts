@@ -87,6 +87,13 @@ export default defineType({
       title: 'Published at',
       type: 'datetime',
     }),
+    defineField( {
+  name: 'views',
+  title: 'Lượt xem',
+  type: 'number',
+  initialValue: 0,
+  readOnly: true,
+}),
     defineField({
       name: 'body',
       title: 'Body',
