@@ -16,7 +16,7 @@ const PROJECTS_QUERY = `*[_type == "project"] | order(_createdAt asc) {
   scale,
   "image": thumbnail.asset->url,
   desc,
-  "link": "/projects/" + slug.current
+  "link": "/Du-an/" + slug.current
 }`;
 
 export default function Interactive3DWheel() {

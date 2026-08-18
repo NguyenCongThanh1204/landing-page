@@ -4,8 +4,8 @@ import About from '../components/About';
 import Services from '../components/Services';
 import Projects from '../components/Projects';
 import Statistics from '../components/Statistics';
-// import Timeline from '../components/Timeline';
-import Timeline from '../components/timeline01'; // Import the new Timeline component
+import Timeline from '../components/Timeline';
+// import Timeline from '../components/timeline01'; // Import the new Timeline component
 import Testimonials from '../components/Testimonials';
 import Partners from '../components/Partners';
 import Blog from '../components/Blog';
