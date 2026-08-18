@@ -41,15 +41,15 @@ export default function App() {
           <div className="flex-grow">
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/services" element={<ServicesPage />} />
-              <Route path="/projects" element={<ProjectsPage />} />
-              <Route path="/contact" element={<ContactPage />} />
-              <Route path="/blog/:slug" element={<BlogDetail />} />
-              <Route path="/blog" element={<BlogList />} />
-              <Route path="/tong-quan" element={<CompanyOverview />} />
-              <Route path="/careers" element={<CareersPage />} />
-              <Route path="/projects/:slug" element={<ProjectDetail />} />
+              <Route path="/Gioi-thieu" element={<AboutPage />} />
+              <Route path="/Dich-vu" element={<ServicesPage />} />
+              <Route path="/Du-an" element={<ProjectsPage />} />
+              <Route path="/Lien-he" element={<ContactPage />} />
+              <Route path="/Tin-tuc/:slug" element={<BlogDetail />} />
+              <Route path="/Tin-tuc" element={<BlogList />} />
+              <Route path="/Tong-quan" element={<CompanyOverview />} />
+              <Route path="/Tuyen-dung" element={<CareersPage />} />
+              <Route path="/Du-an/:slug" element={<ProjectDetail />} />
             </Routes>
             <ScrollToTop />
           </div>

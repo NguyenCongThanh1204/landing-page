@@ -44,10 +44,10 @@ export default function Footer() {
             <h4 className="text-xs uppercase tracking-[0.25em] font-bold text-accent mb-6">Điều hướng</h4>
             <ul className="space-y-3 text-xs font-medium text-white/80">
               <li><Link to="/" className="hover:text-accent transition-colors">Trang chủ</Link></li>
-              <li><Link to="/about" className="hover:text-accent transition-colors">Giới thiệu</Link></li>
-              <li><Link to="/services" className="hover:text-accent transition-colors">Dịch vụ</Link></li>
-              <li><Link to="/projects" className="hover:text-accent transition-colors">Dự án</Link></li>
-              <li><Link to="/contact" className="hover:text-accent transition-colors">Liên hệ</Link></li>
+              <li><Link to="/Gioi-thieu" className="hover:text-accent transition-colors">Giới thiệu</Link></li>
+              <li><Link to="/Dich-vu" className="hover:text-accent transition-colors">Dịch vụ</Link></li>
+              <li><Link to="/Du-an" className="hover:text-accent transition-colors">Dự án</Link></li>
+              <li><Link to="/Lien-he" className="hover:text-accent transition-colors">Liên hệ</Link></li>
             </ul>
           </div>
 

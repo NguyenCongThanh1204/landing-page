@@ -31,7 +31,7 @@ export default function CompanyOverview() {
                 Công Ty Cổ Phần Kiến Trúc Và Xây Dựng <span className="text-[#EB323A]">Tân Minh Nhân</span>
               </h2>
               <p className="text-slate-600 text-base leading-relaxed">
-                Chính thức đi vào hoạt động từ ngày **28/11/2011**, qua hơn 15 năm hình thành và phát triển, Tân Minh Nhân đã khẳng định vị thế là một trong những nhà thầu thi công kiến trúc, hoàn thiện và xây dựng uy tín hàng đầu tại Việt Nam.
+                Chính thức đi vào hoạt động từ ngày 28/11/2011, qua hơn 15 năm hình thành và phát triển, Tân Minh Nhân đã khẳng định vị thế là một trong những nhà thầu thi công kiến trúc, hoàn thiện và xây dựng uy tín hàng đầu tại Việt Nam.
               </p>
               
               {/* Box Phương châm */}

@@ -279,7 +279,7 @@ export default function ProjectDetailPage() {
             Dự án này có thể chưa được cập nhật trên Sanity hoặc đường dẫn đã thay đổi.
           </p>
           <Link
-            to="/projects"
+            to="/Du-an"
             className="inline-flex items-center gap-2.5 text-sm uppercase tracking-widest text-white bg-[#EB323A] font-bold border border-[#EB323A] px-8 py-4 hover:bg-white hover:text-[#EB323A] transition-all duration-300 rounded-sm shadow-md"
           >
             <ArrowLeft size={18} /> Quay lại danh sách dự án
@@ -305,7 +305,7 @@ export default function ProjectDetailPage() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10 pb-20">
         <div className="flex items-center justify-between py-6 border-b border-slate-200/80 mb-8">
           <Link
-            to="/projects"
+            to="/Du-an"
             className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-[#EB323A] transition-colors"
           >
             <ArrowLeft size={16} /> Quay lại danh sách dự án
@@ -421,7 +421,7 @@ export default function ProjectDetailPage() {
 
               {/* <div className="mt-6 pt-5 border-t border-slate-100">
                 <Link
-                  to="/contact"
+                  to="/Lien-he"
                   className="w-full py-3 bg-[#EB323A] hover:bg-red-700 text-white rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-xs"
                 >
                   <PhoneCall size={15} /> Liên hệ hợp tác dự án
@@ -438,7 +438,7 @@ export default function ProjectDetailPage() {
                 Dự án khác
               </h3>
               <Link
-                to="/projects"
+                to="/Du-an"
                 className="text-xs font-bold uppercase tracking-wider text-[#EB323A] hover:text-red-700"
               >
                 Xem tất cả
@@ -450,7 +450,7 @@ export default function ProjectDetailPage() {
                 {relatedProjects.map((item) => (
                   <Link
                     key={item._id}
-                    to={`/projects/${item.slug}`}
+                    to={`/Du-an/${item.slug}`}
                     className="group block w-[280px] sm:w-[320px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-transform duration-300 hover:-translate-y-1 hover:shadow-md"
                   >
                     <div className="aspect-[4/3] overflow-hidden bg-slate-200">

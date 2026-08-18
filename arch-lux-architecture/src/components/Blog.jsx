@@ -47,7 +47,7 @@ export default function Blog() {
 
           {/* Nút Xem tất cả góc phải */}
           <Link
-            to="/blog"
+            to="/Tin-tuc"
             className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-white hover:text-[#EB323A] font-bold transition-colors border border-white/20 hover:border-[#EB323A] px-5 py-3 rounded-sm group"
           >
             Xem tất cả
@@ -73,7 +73,7 @@ export default function Blog() {
             {posts.map((post) => (
               <Link
                 key={post._id}
-                to={`/blog/${post.slug?.current}`}
+                to={`/Tin-tuc/${post.slug?.current}`}
                 className="group cursor-pointer block"
               >
                 <article>

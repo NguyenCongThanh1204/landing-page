@@ -39,7 +39,7 @@ export default function Projects({ isLightPageProp }) {
   }, []);
 
   // Tự động nhận biết Light / Dark mode
-  const isLightPage = isLightPageProp ?? location.pathname.startsWith('/projects');
+  const isLightPage = isLightPageProp ?? location.pathname.startsWith('/Du-an');
 
   // Lấy danh sách Vị trí tự động từ Sanity làm Filter
   const locationsList = Array.from(
@@ -126,7 +126,7 @@ export default function Projects({ isLightPageProp }) {
                   : '';
                 
                 // Xác định đường dẫn chi tiết dựa theo slug hoặc _id
-                const projectPath = `/projects/${project.slug || project._id}`;
+                const projectPath = `/Du-an/${project.slug || project._id}`;
 
                 return (
                   <motion.div

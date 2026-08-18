@@ -10,12 +10,12 @@ gsap.registerPlugin(ScrollTrigger);
 
 const navLinks = [
   { name: "Trang chủ", path: "/" },
-  { name: "Giới thiệu", path: "/about" },
-  { name: "Dịch vụ", path: "/services" },
-  { name: "Dự án", path: "/projects" },
-  { name: "Tin tức", path: "/blog" },
-  { name: "Tuyển dụng", path: "/careers" },
-  { name: "Liên hệ", path: "/contact" },
+  { name: "Giới thiệu", path: "/Gioi-thieu" },
+  { name: "Dịch vụ", path: "/Dich-vu" },
+  { name: "Dự án", path: "/Du-an" },
+  { name: "Tin tức", path: "/Tin-tuc" },
+  { name: "Tuyển dụng", path: "/Tuyen-dung" },
+  { name: "Liên hệ", path: "/Lien-he" },
 ];
 
 export default function Navbar() {
@@ -26,7 +26,7 @@ export default function Navbar() {
   const location = useLocation();
 
   useEffect(() => {
-    const isProjectDetailPage = location.pathname.startsWith("/projects/");
+    const isProjectDetailPage = location.pathname.startsWith("/Du-an/");
 
     if (isProjectDetailPage) {
       setIsNavDark(false);
@@ -79,7 +79,7 @@ export default function Navbar() {
   }, [location.pathname]);
 
   // Thiết lập class màu động dựa theo độ sáng nền bên dưới
-  const isProjectDetailPage = location.pathname.startsWith("/projects/");
+  const isProjectDetailPage = location.pathname.startsWith("/Du-an/");
   const textColor = isNavDark ? "text-white" : "text-navy";
   const hoverTextColor = isNavDark ? "hover:text-accent" : "hover:text-accent";
   const glassBg = isNavDark

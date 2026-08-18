@@ -200,7 +200,7 @@ export default function BlogList() {
                     transition={{ duration: 0.25 }}
                     className="flex flex-col"
                   >
-                    <Link to={`/blog/${featuredPost.slug?.current}`} className="group block mb-4">
+                    <Link to={`/Tin-tuc/${featuredPost.slug?.current}`} className="group block mb-4">
                       <div className="relative w-full h-[280px] sm:h-[360px] overflow-hidden bg-slate-100 rounded-xs">
                         {featuredPost.mainImage ? (
                           <img
@@ -227,7 +227,7 @@ export default function BlogList() {
                       </span>
                     </div>
 
-                    <Link to={`/blog/${featuredPost.slug?.current}`}>
+                    <Link to={`/Tin-tuc/${featuredPost.slug?.current}`}>
                       <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-3 leading-snug hover:text-[#EB323A] transition-colors">
                         {featuredPost.title}
                       </h2>
@@ -241,7 +241,7 @@ export default function BlogList() {
 
                     <div>
                       <Link
-                        to={`/blog/${featuredPost.slug?.current}`}
+                        to={`/Tin-tuc/${featuredPost.slug?.current}`}
                         className="inline-flex items-center gap-2 bg-[#EB323A] hover:bg-[#c82229] text-white font-semibold text-xs uppercase px-5 py-2.5 transition-all shadow-xs rounded-xs"
                       >
                         <span>Xem chi tiết</span>
@@ -256,7 +256,7 @@ export default function BlogList() {
             {/* CỘT PHẢI - SCROLLABLE LIST */}
             <div className="lg:col-span-5 bg-white border border-slate-200 p-4 sm:p-5 shadow-xs">
               <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider pb-3 mb-3 border-b border-slate-100 flex items-center justify-between">
-                <span>Mới cập nhật ({filteredPosts.length})</span>
+                <span>Lượt xem nhiều nhất ({filteredPosts.length})</span>
                 <Clock size={14} className="text-[#EB323A]" />
               </div>
 

@@ -210,7 +210,7 @@ export default function BlogDetail() {
       <div className="max-w-5xl mx-auto px-6 md:px-12">
         {/* Nút Quay lại */}
         <Link
-          to="/blog"
+          to="/Tin-tuc"
           className="inline-flex items-center gap-2.5 text-sm uppercase tracking-widest text-slate-500 hover:text-[#EB323A] font-bold transition-colors mb-12"
         >
           <ArrowLeft size={18} /> Quay lại
